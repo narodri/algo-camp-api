@@ -2,6 +2,7 @@ from typing import List
 from fastapi import Depends, FastAPI, HTTPException, Body
 from sqlalchemy.orm import Session, Query
 from sqlalchemy.sql import func
+from datetime import datetime
 
 from . import crud, models, schemas
 from .database import SessionLocal, engine
@@ -117,8 +118,24 @@ async def create_user(name: str = Body(), role: int = Body(), login_id:str=Body(
     db.commit()
     return "Insert completed !!"
 
+@app.post("/questions/create")
+async def create_question(event_id: int = Body(), title: str = Body(), condition: str=Body(), level: int = Body(), limit_memory: int = Body(), limit_millisec: int = Body(), problem: str = Body(), in_format: str = Body(), out_format: str = Body(), in_sample_1:str=Body(), out_sample_1:str=Body(), in_sample_2:str=Body(), out_sample_2:str=Body(), in_test_1: str = Body(), out_test_1: str = Body(), in_test_2: str = Body(), out_test_2: str = Body(), in_test_3: str = Body(), out_test_3: str = Body(), in_test_4: str = Body(), out_test_4: str = Body(), in_test_5: str = Body(), out_test_5: str = Body(), is_active: bool = Body(), db: Session = Depends(get_db)):
+    question_add = models.Question(event_id=event_id, title=title, level=level, condition=condition, limit_memory=limit_memory, limit_millisec=limit_millisec,problem=problem,in_format=in_format,out_format=out_format,in_sample_1=in_sample_1,out_sample_1=out_sample_1,in_sample_2=in_sample_2,out_sample_2=out_sample_2,in_test_1=in_test_1, out_test_1=out_test_1, in_test_2=in_test_2,out_test_2=out_test_2,in_test_3=in_test_3,out_test_3=out_test_3,in_test_4=in_test_4,out_test_4=out_test_4,in_test_5=in_test_5,out_test_5=out_test_5 ,is_active=is_active)
+    db.add(question_add)
+    db.flush()
+    db.commit()
+    return "Insert completed !!"
+
+@app.post("/events/create")
+async def create_event(title: str = Body(), opened_at: str = Body(), end_at: str=Body(), is_active: bool=Body(), db: Session = Depends(get_db)):
+    event_add = models.Event(title=title, opened_at=opened_at, end_at=end_at, is_active=is_active)
+    db.add(event_add)
+    db.flush()
+    db.commit()
+    return "Insert completed !!"
+
 # UPDATE
-@app.put("/users/udpate/{user_id}")
+@app.put("/users/update/{user_id}")
 async def update_user(user_id: int, name: str = Body(), role: int = Body(), login_id:str=Body(), password: str = Body(), is_active: bool=Body(), db: Session = Depends(get_db)):
     user_update = db.query(models.User).filter(models.User.id == user_id).update({
         models.User.name: name,
@@ -131,6 +148,51 @@ async def update_user(user_id: int, name: str = Body(), role: int = Body(), logi
     db.commit()
     return "Update completed !!"
 
+@app.put("/questions/update/{question_id}")
+async def update_question(question_id: int, event_id: int = Body(), title: str = Body(), condition: str=Body(), level: int = Body(), limit_memory: int = Body(), limit_millisec: int = Body(), problem: str = Body(), in_format: str = Body(), out_format: str = Body(), in_sample_1:str=Body(), out_sample_1:str=Body(), in_sample_2:str=Body(), out_sample_2:str=Body(), in_test_1: str = Body(), out_test_1: str = Body(), in_test_2: str = Body(), out_test_2: str = Body(), in_test_3: str = Body(), out_test_3: str = Body(), in_test_4: str = Body(), out_test_4: str = Body(), in_test_5: str = Body(), out_test_5: str = Body(), is_active: bool = Body(), db: Session = Depends(get_db)):
+    values_to_update = {
+        models.Question.event_id: event_id,
+        models.Question.title: title,
+        models.Question.level: level,
+        models.Question.condition: condition,
+        models.Question.limit_memory: limit_memory,
+        models.Question.limit_millisec: limit_millisec,
+        models.Question.problem: problem,
+        models.Question.in_format: in_format,
+        models.Question.out_format: out_format,
+        models.Question.in_sample_1: in_sample_1,
+        models.Question.out_sample_1: out_sample_1,
+        models.Question.in_sample_2: in_sample_2,
+        models.Question.out_sample_2: out_sample_2,
+        models.Question.in_test_1: in_test_1,
+        models.Question.out_test_1: out_test_1,
+        models.Question.in_test_2: in_test_2,
+        models.Question.out_test_2: out_test_2,
+        models.Question.in_test_3: in_test_3,
+        models.Question.out_test_3: out_test_3,
+        models.Question.in_test_4: in_test_4,
+        models.Question.out_test_4: out_test_4,
+        models.Question.in_test_5: in_test_5,
+        models.Question.out_test_5: out_test_5,
+        models.Question.is_active: is_active
+    }
+    db.query(models.Question).filter(models.Question.id == question_id).update(values_to_update)
+    db.commit()
+    return "Update completed !!"
+
+@app.put("/events/update/{event_id}")
+async def update_event(event_id: int, title: str = Body(), opened_at: str = Body(), end_at:str=Body(), is_active: bool=Body(), db: Session = Depends(get_db)):
+    user_event = db.query(models.Event).filter(models.Event.id == event_id).update({
+        models.Event.title: title,
+        models.Event.opened_at: opened_at,
+        models.Event.end_at: end_at,
+        models.Event.is_active: is_active
+        })
+    db.flush()
+    db.commit()
+    return "Update completed !!"
+
+# deactivate
 @app.put("/users/{user_id}")
 async def deactivateUser(user_id: int, db: Session = Depends(get_db)):
     user = db.query(models.User).filter(models.User.id == user_id).first()

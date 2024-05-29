@@ -148,6 +148,18 @@ async def update_user(user_id: int, name: str = Body(), role: int = Body(), logi
     db.commit()
     return "Update completed !!"
 
+@app.put("/users/update2/{user_id}")
+async def update_user(user_id: int, name: str = Body(), role: int = Body(), login_id:str=Body(), is_active: bool=Body(), db: Session = Depends(get_db)):
+    user_update = db.query(models.User).filter(models.User.id == user_id).update({
+        models.User.name: name,
+        models.User.role: role,
+        models.User.login_id: login_id,
+        models.User.is_active: is_active
+        })
+    db.flush()
+    db.commit()
+    return "Update completed !!"
+
 @app.put("/questions/update/{question_id}")
 async def update_question(question_id: int, event_id: int = Body(), title: str = Body(), condition: str=Body(), level: int = Body(), limit_memory: int = Body(), limit_millisec: int = Body(), problem: str = Body(), in_format: str = Body(), out_format: str = Body(), in_sample_1:str=Body(), out_sample_1:str=Body(), in_sample_2:str=Body(), out_sample_2:str=Body(), in_test_1: str = Body(), out_test_1: str = Body(), in_test_2: str = Body(), out_test_2: str = Body(), in_test_3: str = Body(), out_test_3: str = Body(), in_test_4: str = Body(), out_test_4: str = Body(), in_test_5: str = Body(), out_test_5: str = Body(), is_active: bool = Body(), db: Session = Depends(get_db)):
     values_to_update = {

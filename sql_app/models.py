@@ -85,7 +85,7 @@ class Event(Base):
     __tablename__ = "events"
 
     id = Column(Integer, primary_key=True)
-    title = Column(String)
+    title = Column(String, unique=True)
     created_at = Column(DateTime(timezone=True), default=func.now())
     opened_at = Column(DateTime(timezone=True))
     end_at = Column(DateTime(timezone=True))

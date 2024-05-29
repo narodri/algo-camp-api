@@ -22,7 +22,7 @@ def all_user(db: Session):
     return db_user
 
 def get_question(db: Session, question_id: int):
-    return db.query(models.Question).filter(models.Question.id == question_id).first()
+    return db.query(models.Question).filter(models.Question.id == question_id, models.Question.is_active == True).first()
 
 # def all_question(db: Session):
 #     return db.query(models.Question).order_by(models.Question.id)
@@ -38,7 +38,7 @@ def all_participant(db: Session):
 # def all_event(db: Session):
 #     return db.query(models.Event).order_by(models.Event.id)
 def all_event(db: Session):
-    db_event = db.query(models.Event).order_by(models.Event.id)
+    db_event = db.query(models.Event).filter(models.Event.is_active == True).order_by(models.Event.id)
     for event in db_event:
         event.created_at_str = event.opened_at.strftime("%Y/%m/%d %H:%M")
         event.logined_at_str = event.end_at.strftime("%Y/%m/%d %H:%M")
@@ -60,6 +60,6 @@ def active_question(db: Session):
     return db.query(models.Question).filter(models.Question.is_active is True).order_by(models.Event.id)
 
 def get_event(db: Session, event_id: int):
-    q = db.query(models.Event).filter(models.Event.id == event_id)
+    q = db.query(models.Event).filter(models.Event.id == event_id,models.Event.is_active == True)
     print(q.statement)
     return q.first()

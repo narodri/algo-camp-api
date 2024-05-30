@@ -59,6 +59,7 @@ class Question(Base):
     #relationship
     author = relationship("User", back_populates="questions")
     event = relationship("Event", back_populates="question")
+    participants = relationship("Participant", back_populates="question")
 
 class Participant(Base):
     __tablename__ = "participants"
@@ -76,10 +77,12 @@ class Participant(Base):
     test_5_pass = Column(Boolean, default=False)
     #外部キー
     event_id = Column(Integer, ForeignKey("events.id"))
+    question_id = Column(Integer, ForeignKey("questions.id"))
     user_id = Column(Integer, ForeignKey("users.id"))
     # relationship
-    event = relationship("Event", back_populates="participant")
+    event = relationship("Event", back_populates="participants")
     user = relationship("User", back_populates="participants")
+    question = relationship("Question", back_populates="participants")
 
 class Event(Base):
     __tablename__ = "events"
@@ -95,5 +98,5 @@ class Event(Base):
     #外部キー
     # question_id = Column(Integer, ForeignKey("questions.id"))
     #relationship
-    participant = relationship("Participant", back_populates="event")
+    participants = relationship("Participant", back_populates="event")
     question = relationship("Question", back_populates="event")

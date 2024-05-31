@@ -3,14 +3,17 @@ from fastapi import Depends, FastAPI, HTTPException, Body
 from sqlalchemy.orm import Session, Query
 from sqlalchemy.sql import func
 from datetime import datetime
-
 from . import crud, models, schemas
 from .database import SessionLocal, engine
-
 from functools import lru_cache
 from .config import settings
 from fastapi.middleware.cors import CORSMiddleware
-
+### jwt
+from passlib.context import CryptContext
+from fastapi.security import OAuth2PasswordBearer
+from jose import JWTError, jwt
+import pprint, datetime
+###
 models.Base.metadata.create_all(bind=engine)
 
 @lru_cache()
@@ -18,14 +21,6 @@ def get_settings():
     return settings()
 
 app = FastAPI()
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["GET", "POST", "PUT", "DELETE"],
-    allow_headers=["*"],
-)
 
 # Dependency
 def get_db():
@@ -35,14 +30,60 @@ def get_db():
     finally:
         db.close()
 
+# JWT settings
+SECRET_KEY = "your-secret-key"
+ALGORITHM = "HS256"
+ACCESS_TOKEN_EXPIRE_MINUTES = 30
+
+# JWT
+@app.post("/token", response_model=schemas.UserToken)
+async def login_for_access_token(login_id: str = Body(), password: str = Body(), db: Session = Depends(get_db)):
+    print(login_id, password)
+    user = crud.authenticate_user(db, login_id, password)
+    if not user:
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid username or password",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    # access_token = create_access_token(data={"sub": user.username})
+    else:
+        to_encode = {
+            "sub": user.login_id,
+            "id":user.id,
+            "role":user.role
+        }
+        expire = datetime.datetime.utcnow() + datetime.timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+        encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+        # to_encode.update({"access_expired": expire})
+        db.query(models.User).filter(models.User.login_id==login_id).update({
+            "access_expired": expire,
+            "access_token": encoded_jwt,
+            })
+        db.flush()
+        db.commit()
+        print(encoded_jwt)
+
+        return {"access_token": encoded_jwt, "token_type": "bearer", "role":user.role, "id":user.id}
+
+########################################
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["GET", "POST", "PUT", "DELETE"],
+    allow_headers=["*"],
+)
+
 # ログインエンドポイント
-@app.head('/login')
-@app.post("/login", response_model=schemas.LoginResponse)
+@app.head('/')
+@app.post("/", response_model=schemas.LoginResponse)
 def login(request: schemas.LoginRequest, db: Session = Depends(get_db)):
     user = db.query(models.User).filter(models.User.id == request.id, models.User.password == request.password).first()
     if not user:
         raise HTTPException(status_code=401, detail="Invalid ID or password")
-    return {"role": user.role}
+    return {"role": user.role, "id":user.id}
 
 # READ
 @app.get("/users/", response_model=List[schemas.User])

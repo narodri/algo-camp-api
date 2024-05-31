@@ -2,7 +2,7 @@ from sqlalchemy import Boolean, Column, ForeignKey, Integer, String, DateTime
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from .database import Base
-
+from datetime import datetime
 
 class User(Base):
     __tablename__ = "users"
@@ -17,10 +17,10 @@ class User(Base):
     role = Column(Integer)
     password = Column(String)
     is_active = Column(Boolean)
-    access_token = Column(String)
-    access_expired = Column(DateTime(timezone=True), default=func.now())
-    access_expired = Column(DateTime(timezone=True))
     profile_image_path = Column(String)
+    # JWT
+    access_token = Column(String)
+    access_expired = Column(String)
     #relationship
     questions = relationship("Question", back_populates="author")
     participants = relationship("Participant", back_populates="user")

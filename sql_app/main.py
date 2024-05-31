@@ -33,7 +33,7 @@ def get_db():
 # JWT settings
 SECRET_KEY = "your-secret-key"
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 30
+ACCESS_TOKEN_EXPIRE_MINUTES = 2
 
 # JWT
 @app.post("/token", response_model=schemas.UserToken)
@@ -48,12 +48,14 @@ async def login_for_access_token(login_id: str = Body(), password: str = Body(),
         )
     # access_token = create_access_token(data={"sub": user.username})
     else:
+        expire = datetime.datetime.now() + datetime.timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+        expire_str = str(expire)
         to_encode = {
             "sub": user.login_id,
             "id":user.id,
-            "role":user.role
+            "role":user.role,
+            "expire":expire_str
         }
-        expire = datetime.datetime.utcnow() + datetime.timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
         encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
         # to_encode.update({"access_expired": expire})
         db.query(models.User).filter(models.User.login_id==login_id).update({
@@ -65,6 +67,13 @@ async def login_for_access_token(login_id: str = Body(), password: str = Body(),
         print(encoded_jwt)
 
         return {"access_token": encoded_jwt, "token_type": "bearer", "role":user.role, "id":user.id}
+
+@app.get("/user_expired/{user_id}", response_model=schemas.UserExpired)
+def read_user(user_id: int, db: Session = Depends(get_db)):
+    db_user = crud.get_user(db, user_id=user_id)
+    if db_user is None:
+        raise HTTPException(status_code=404, detail="User not found")
+    return db_user
 
 ########################################
 

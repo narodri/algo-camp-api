@@ -10,6 +10,10 @@ class UserToken(BaseModel):
 
     class Config:
         orm_mode = True
+class UserExpired(BaseModel):
+    access_expired: str
+    class Config:
+        orm_mode = True
 
 class LoginRequest(BaseModel):
     login_id: str
